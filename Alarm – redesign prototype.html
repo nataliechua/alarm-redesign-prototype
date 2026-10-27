@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alarm – redesign prototype</title>
+<style>
+:root{--card:#fff;--pg:#e5e5ea;--bg:#fff;--fg:#000;--mut:#8e8e93;--sep:#d1d1d6;--chip:#f2f2f7;--org:#ff9500;--grn:#34c759;--off:#e9e9ea;--menu:#f2f2f7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--card:#2c2c2e;--pg:#1c1c1e;--bg:#000;--fg:#fff;--mut:#8e8e93;--sep:#38383a;--chip:#1c1c1e;--off:#39393d;--menu:#2c2c2e}}
+:root[data-theme="dark"]{--card:#2c2c2e;--pg:#1c1c1e;--bg:#000;--fg:#fff;--mut:#8e8e93;--sep:#38383a;--chip:#1c1c1e;--off:#39393d;--menu:#2c2c2e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--pg);color:var(--fg);font-family:-apple-system,"SF Pro Text",Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.phone{width:390px;height:min(844px,100%);background:var(--bg);border-radius:44px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 8px #111,0 20px 60px rgba(0,0,0,.4);position:relative}
+@media (max-width:440px){.phone{width:100%;height:100%;border-radius:0;box-shadow:none}}
+.bar{display:flex;justify-content:space-between;padding:18px 20px 0;font-size:17px;color:var(--org)}
+.bar button{font:inherit;color:inherit;background:none;border:0;padding:6px 0;min-height:44px;cursor:pointer}
+h1{font-size:34px;margin:0;padding:0 20px 8px}
+.scroll{flex:1;overflow-y:auto;padding:0 20px 24px}
+.sec{display:flex;align-items:center;gap:8px;font-size:21px;font-weight:700;margin:18px 0 4px;background:none;border:0;color:var(--fg);padding:0;width:100%;text-align:left;font-family:inherit}
+.sec .n{font-size:15px;font-weight:500;color:var(--mut)}
+.sec .ch{margin-left:auto;color:var(--mut);transition:transform .2s;font-size:22px;font-weight:400}
+.sec.open .ch{transform:rotate(90deg)}
+.row,.gh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--sep);user-select:none;-webkit-user-select:none}
+.time{font-size:52px;font-weight:300;line-height:1.05;letter-spacing:-1px}
+.time small{font-size:24px;font-weight:400;letter-spacing:0;margin-left:3px}
+.sub{font-size:16px;line-height:20px;min-height:20px;color:var(--mut);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.row.off .time,.row.off .sub{color:var(--mut)}
+.row.dim{opacity:.7}
+.sw{width:51px;height:31px;border-radius:16px;border:0;background:var(--off);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform .2s}
+.sw.on{background:var(--grn)}.sw.on::after{transform:translateX(20px)}
+.gh{cursor:pointer}
+.gt{font-size:30px;font-weight:600;display:flex;align-items:center;gap:8px}
+.gt .ic{width:22px;height:22px}
+.chev{color:var(--mut);font-size:22px;transition:transform .2s;display:inline-block}
+.open>.gh .chev{transform:rotate(90deg)}
+.kids{margin-left:12px;padding-left:14px;border-left:2px solid var(--sep)}
+.kids .time{font-size:40px}
+.chips{display:flex;gap:6px;margin-top:4px}
+.chip{background:var(--chip);border-radius:12px;padding:2px 9px;font-size:13px;color:var(--fg)}
+.chip.x{color:var(--mut);text-decoration:line-through}
+.swipe{position:relative;overflow:hidden}
+.slide{background:var(--bg);position:relative;touch-action:pan-y;transition:transform .25s ease}
+.act{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;font:600 17px -apple-system,Helvetica,Arial,sans-serif;border:0;cursor:pointer;overflow:hidden;white-space:nowrap;padding:0}
+.act.pn{left:0;width:88px;background:var(--org)}
+.act.dl{right:0;width:88px;background:#ff3b30}
+.act .ic{stroke:#fff}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:9}
+.scrim[hidden]{display:none}
+.dlg{width:270px;background:var(--menu);border-radius:14px;text-align:center;overflow:hidden}
+.dlg h2{font-size:17px;margin:20px 16px 4px}
+.dlg p{font-size:13px;margin:0 16px 18px;color:var(--fg)}
+.dlg button{width:100%;font:600 17px -apple-system,Helvetica,Arial,sans-serif;color:var(--org);background:none;border:0;border-top:1px solid var(--sep);min-height:44px;cursor:pointer}
+.rule{font-size:13px;color:var(--mut);margin:0 0 6px}
+.shw{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:8}
+.shw[hidden]{display:none}
+.sheet{width:100%;background:var(--chip);border-radius:14px 14px 0 0;padding:14px 16px 24px;max-height:92%;overflow-y:auto}
+.shb{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.shb button{font:17px -apple-system,Helvetica,Arial,sans-serif;color:var(--org);background:none;border:0;min-height:44px;padding:0 4px;cursor:pointer}
+.shb button#save{font-weight:600}
+.shb b{font-size:17px}
+.tp{display:flex;justify-content:center;align-items:center;gap:6px;background:var(--card);border-radius:12px;padding:14px;font-size:34px;margin-bottom:14px}
+.tp select{font:300 34px -apple-system,Helvetica,Arial,sans-serif;color:var(--fg);background:var(--chip);border:0;border-radius:10px;padding:6px 8px;min-height:44px}
+.fr{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);padding:6px 16px;min-height:48px;font-size:17px}
+.fr:first-of-type{border-radius:12px 12px 0 0}.fr+.fr{border-top:1px solid var(--sep)}
+.fr select,.fr input{font:17px -apple-system,Helvetica,Arial,sans-serif;color:var(--mut);background:none;border:0;text-align:right;min-height:44px;max-width:60%}
+.fr input{color:var(--fg)}
+.pick{background:var(--card);border-radius:0 0 12px 12px;padding:10px 16px 14px}
+.pick p{margin:0 0 8px;font-size:17px}
+.pk{display:flex;flex-wrap:wrap;gap:8px}
+.pk button{min-width:44px;height:44px;border-radius:10px;border:1.5px solid var(--sep);background:none;color:var(--fg);font:14px -apple-system,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:0 10px;cursor:pointer}
+.pk button[aria-pressed="true"]{border-color:var(--org);color:var(--org);background:rgba(255,149,0,.12)}
+.hint{text-align:center;font-size:13px;color:var(--mut);margin:18px 0 0}
+.tabs{display:flex;justify-content:space-around;padding:8px 0 14px;border-top:1px solid var(--sep);background:var(--bg)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--mut)}
+.tab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--org)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="bar"><button>Edit</button><button id="addBtn" aria-label="Add alarm" style="font-size:30px;line-height:1">+</button></div>
+  <h1>Alarms</h1>
+  <div class="scroll" id="app"></div>
+  <nav class="tabs" aria-label="Clock tabs">
+    <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>World Clock</div>
+    <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M4 5l3-2M20 5l-3-2"/></svg>Alarms</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="8"/><path d="M12 10v4M9 2h6"/></svg>Stopwatch</div>
+    <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Timer</div>
+  </nav>
+  <div class="shw" id="add" role="dialog" aria-modal="true" aria-label="Add Alarm" hidden>
+    <div class="sheet">
+      <div class="shb"><button id="cancel">Cancel</button><b>Add Alarm</b><button id="save">Save</button></div>
+      <div class="tp"><select id="hh" aria-label="Hour"></select>:<select id="mm" aria-label="Minute"></select><select id="ap" aria-label="AM or PM"><option>AM</option><option>PM</option></select></div>
+      <label class="fr">Repeat<select id="rp"><option>Once</option><option>Weekdays</option><option>Weekends</option><option selected>Daily</option></select></label>
+      <label class="fr">Label<input id="lb" placeholder="Optional" maxlength="30" autocomplete="off"></label>
+      <div class="pick"><p>Icon <span style="color:var(--mut);font-size:14px">(optional)</span></p><div class="pk" id="pk" role="group" aria-label="Icon"></div></div>
+    </div>
+  </div>
+  <div class="scrim" id="alert" role="alertdialog" aria-modal="true" aria-labelledby="at" aria-describedby="am" hidden><div class="dlg"><h2 id="at">Pin Limit Reached</h2><p id="am">You can pin up to 10 alarms. Unpin an alarm to pin another.</p><button id="ok">OK</button></div></div>
+</div>
+<script>
+const I={pin:'<path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/>',gym:'<path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',bowl:'<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 4v4M12 4v4M16 4v4"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',work:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V4h6v3M3 13h18"/>',wash:'<path d="M3 10h18l-2 10H5z"/><path d="M8 10l3-6M16 10l-3-6"/>',cake:'<path d="M4 20h16v-7H4zM4 16c3 2 5-2 8 0s5-2 8 0M12 9V6"/>',ticket:'<path d="M3 8a2 2 0 0 0 0 4a2 2 0 0 0 0 4v2h18v-2a2 2 0 0 1 0-4a2 2 0 0 1 0-4V6H3z"/><path d="M14 6v12"/>',box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',tool:'<path d="M15 5a4 4 0 0 0 4 5l-8 9a2 2 0 0 1-3-3l7-8z"/>',train:'<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 21l2-4M15 21l-2-4"/>',cup:'<path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',run:'<circle cx="14" cy="4" r="2"/><path d="M12 21l2-6-3-3 2-5 4 3h3M9 12l-3 1"/>',book:'<path d="M4 4h6a3 3 0 0 1 2 1 3 3 0 0 1 2-1h6v15h-6a3 3 0 0 0-2 1 3 3 0 0 0-2-1H4z"/><path d="M12 5v15"/>'};
+const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
+const one=(id,t,p,l,r,i,on,pin,stale=0)=>({id,t,p,l,r,i,on,pin,stale});
+let S=[
+ one('run','6:00','AM','','Sat, Sun','',1,0),
+ one('gym','6:30','AM','Gym','Weekdays','gym',1,1),
+ one('train','7:45','AM','Train','Weekdays','',1,0),
+ {id:'wake',g:1,l:'Wake Up',i:'sun',pin:1,open:1,k:[
+  {t:'8:00',p:'AM',l:'',on:1},{t:'8:05',p:'AM',l:'',on:1},{t:'8:10',p:'AM',l:'',on:1},{t:'8:15',p:'AM',l:'',on:0}]},
+ {id:'work',g:1,l:'Work',i:'work',open:0,k:[
+  {t:'9:00',p:'AM',l:'',on:1},{t:'9:15',p:'AM',l:'',on:1},{t:'9:30',p:'AM',l:'',on:1}]},
+ one('coffee','10:30','AM','','Weekdays','',1,0),
+ one('lunch','12:30','PM','Lunch','Daily','bowl',1,0),
+ one('team','2:00','PM','','Mon, Wed','',1,0),
+ one('kids','3:30','PM','','Weekdays','',1,0),
+ one('home','6:00','PM','','Sun','',1,0),
+ one('dinner','7:00','PM','','Daily','',1,0),
+ one('study','8:00','PM','','Weekdays','',1,0),
+ one('bed','10:30','PM','Bedtime','Daily','moon',1,0),
+ one('o1','11:00','AM','Call plumber','','',0,0,1),
+ one('o2','3:00','PM','','','',0,0,1),
+ one('o3','10:00','AM','Buy concert tickets','','',0,0,1),
+ one('o4','2:00','PM','','','',0,0,1),
+ one('o5','6:00','PM','Laundry','','wash',0,0,1),
+ one('o7','8:00','PM','','','',0,0,1),
+ one('o8','9:30','AM','','','',0,0,1),
+ one('o6','9:00','AM','','','',0,0,1)
+];
+const LIMIT=10;
+let nfuOpen=false,skip=false,drag=null,openId=null;
+const mins=x=>{const r=x.g?x.k[0]:x;const[h,m]=r.t.split(':').map(Number);return(h%12+(r.p==='PM'?12:0))*60+m};
+const byTime=(a,b)=>mins(a)-mins(b);
+const isOn=x=>x.g?x.k.some(k=>k.on):x.on;
+const isNfu=x=>!x.g&&x.stale&&!x.pin;
+const sw=(on,id,k)=>`<button class="sw${on?' on':''}" role="switch" aria-checked="${!!on}" aria-label="Alarm switch" data-act="sw" data-id="${id}"${k!=null?` data-k="${k}"`:''}></button>`;
+const time=(t,p)=>`<div class="time">${t}<small>${p}</small></div>`;
+const wrap=(x,h)=>`<div class="swipe" data-id="${x.id}"><button class="act pn" data-act="pin" data-id="${x.id}">${ic('pin')}${x.pin?'Unpin':'Pin'}</button><button class="act dl" data-act="del" data-id="${x.id}">Delete</button><div class="slide">${h}</div></div>`;
+function row(x,extra=''){return wrap(x,`<div class="row${x.on?'':' off'}${extra}"><div>${time(x.t,x.p)}<div class="sub">${x.i?ic(x.i):''}${x.l?[x.l,x.r].filter(Boolean).join(', '):'Alarm'}</div></div>${sw(x.on,x.id)}</div>`)}
+function grp(x){
+  const k=x.k,n=k.filter(a=>a.on).length,last=k[k.length-1];
+  const sub=x.open?`${k.length} alarms · ${k[0].t} – ${last.t} ${last.p}`:`${n} of ${k.length} on`;
+  const chips=x.open?'':`<div class="chips">${k.map(a=>`<span class="chip${a.on?'':' x'}">${a.t}</span>`).join('')}</div>`;
+  const kids=x.open?`<div class="kids">${k.map((a,j)=>`<div class="row${a.on?'':' off'}"><div>${time(a.t,a.p)}<div class="sub">${a.l?ic(x.i)+a.l+', Weekdays':'Alarm'}</div></div>${sw(a.on,x.id,j)}</div>`).join('')}</div>`:'';
+  return `<div class="${x.open?'open':''}">${wrap(x,`<div class="gh" data-act="open" data-id="${x.id}"><div><div class="gt"><span class="chev">›</span>${x.l}</div><div class="sub">${sub}</div>${chips}</div>${sw(isOn(x),x.id)}</div>`)}${kids}</div>`;
+}
+const item=(x,e)=>x.g?grp(x):row(x,e);
+function render(){
+  const pins=S.filter(x=>x.pin).sort(byTime),nf=S.filter(isNfu),main=S.filter(x=>!x.pin&&!isNfu(x)).sort(byTime);
+  let h='';
+  if(pins.length)h+=`<div class="sec">${ic('pin')}Pinned<span class="n">${pins.length} of ${LIMIT}</span></div>`+pins.map(x=>item(x)).join('');
+  h+=`<div class="sec">Alarms</div>`+main.map(x=>item(x)).join('');
+  if(nf.length)h+=`<button class="sec${nfuOpen?' open':''}" data-act="nfu" aria-expanded="${nfuOpen}">Not frequently used<span class="n">${nf.length}</span><span class="ch">›</span></button><p class="rule">Alarms not used for more than 1 month are moved here.</p>`+(nfuOpen?nf.map(x=>row(x,' dim')).join(''):'');
+  document.getElementById('app').innerHTML=h;
+}
+const app=document.getElementById('app');
+function resetSwipes(){app.querySelectorAll('.swipe').forEach(s=>{s.querySelector('.slide').style.transform='';s.dataset.state='';s.querySelector('.pn').style.width=s.querySelector('.dl').style.width=''});openId=null}
+function showAlert(){const d=document.getElementById('alert');d.hidden=false;document.getElementById('ok').focus()}
+function hideAlert(){document.getElementById('alert').hidden=true}
+function act(id,what){
+  const a=S.find(s=>s.id===id);
+  if(what==='pin'){
+    if(!a.pin&&S.filter(s=>s.pin).length>=LIMIT){resetSwipes();showAlert();return}
+    a.pin=a.pin?0:1;
+  }else S=S.filter(s=>s!==a);
+  openId=null;render();
+}
+document.getElementById('ok').addEventListener('click',hideAlert);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideAlert();closeAdd()}});
+let pickIcon='';
+const add=document.getElementById('add');
+for(let h=1;h<=12;h++)hh.add(new Option(h,h));
+for(let m=0;m<60;m++)mm.add(new Option(String(m).padStart(2,'0'),m));
+function drawPick(){pk.innerHTML=`<button type="button" data-ic="" aria-pressed="${pickIcon===''}">None</button>`+Object.keys(I).filter(k=>k!=='pin').map(k=>`<button type="button" data-ic="${k}" aria-label="${k}" aria-pressed="${pickIcon===k}">${ic(k)}</button>`).join('')}
+function openAdd(){hh.value=7;mm.value=0;ap.value='AM';rp.value='Daily';lb.value='';pickIcon='';drawPick();add.hidden=false;hh.focus()}
+function closeAdd(){add.hidden=true}
+pk.addEventListener('click',e=>{const b=e.target.closest('[data-ic]');if(b){pickIcon=b.dataset.ic;drawPick()}});
+addBtn.addEventListener('click',openAdd);
+cancel.addEventListener('click',closeAdd);
+save.addEventListener('click',()=>{
+  const id='n'+Date.now();
+  S.push(one(id,hh.value+':'+String(mm.value).padStart(2,'0'),ap.value,lb.value.trim(),rp.value==='Once'?'One time':rp.value,pickIcon,1,0,0));
+  closeAdd();render();
+  const el=app.querySelector(`[data-id="${id}"]`);if(el)el.scrollIntoView({block:'center',behavior:'smooth'});
+});
+app.addEventListener('click',e=>{
+  if(skip)return;
+  const onAct=e.target.closest('.act');
+  if(openId&&!onAct){resetSwipes();return}
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const w=t.dataset.act,a=S.find(s=>s.id===t.dataset.id);
+  if(w==='pin'||w==='del')return act(a.id,w);
+  if(w==='sw'){
+    if(a.g){if(t.dataset.k!=null)a.k[+t.dataset.k].on^=1;else{const v=isOn(a)?0:1;a.k.forEach(k=>k.on=v)}}
+    else{a.on^=1;if(a.on)a.stale=0}
+  }else if(w==='open')a.open=!a.open;
+  else if(w==='nfu')nfuOpen=!nfuOpen;
+  render();
+});
+app.addEventListener('pointerdown',e=>{
+  const s=e.target.closest('.swipe');
+  if(openId&&!e.target.closest('.act')&&(!s||s.dataset.id!==openId))resetSwipes();
+  if(!s||e.target.closest('.act')||e.button)return;
+  drag={s,sl:s.querySelector('.slide'),x:e.clientX,y:e.clientY,base:+s.dataset.state||0,cur:0,moved:false};
+});
+app.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.moved){
+    if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){drag=null;return}
+    if(Math.abs(dx)<8)return;
+    drag.moved=true;drag.sl.setPointerCapture(e.pointerId);drag.sl.style.transition='none';
+  }
+  const W=drag.s.offsetWidth,x=Math.max(-W,Math.min(W,drag.base+dx));
+  drag.cur=x;drag.sl.style.transform=`translateX(${x}px)`;
+  drag.s.querySelector('.pn').style.width=Math.max(88,x)+'px';
+  drag.s.querySelector('.dl').style.width=Math.max(88,-x)+'px';
+});
+function end(){
+  if(!drag)return;const d=drag;drag=null;
+  if(!d.moved)return;
+  skip=true;setTimeout(()=>skip=false,60);
+  const W=d.s.offsetWidth,x=d.cur,id=d.s.dataset.id;d.sl.style.transition='';
+  if(x>W*.55)return act(id,'pin');
+  if(x<-W*.55)return act(id,'del');
+  const v=x>44?88:x<-44?-88:0;
+  d.sl.style.transform=v?`translateX(${v}px)`:'';
+  d.s.dataset.state=v||'';
+  d.s.querySelector('.pn').style.width=d.s.querySelector('.dl').style.width='';
+  openId=v?id:null;
+}
+app.addEventListener('pointerup',end);app.addEventListener('pointercancel',end);
+render();
+</script>
+</body>
+</html>
